@@ -15,5 +15,17 @@
     <% }) %>
     </ul>
     <a href="/cars/new">Add New Car</a>
+    <ul>
+        <% cars.forEach(car => { %>
+         <li>
+            <strong><%= car.make %> <%= car.model %> (<%= car.year %>)</strong>
+            <p><%= car.description %></p>
+            <a href="/cars/edit/<%= car._id %>">Edit</a>
+            <form action="/cars/delete/<%= car._id %>" method="POST" style="display:inline;">
+                <button type="submit">Delete</button>
+            </form>
+         </li>
+         <% }) %>
+    </ul>
 </body>
 </html>
