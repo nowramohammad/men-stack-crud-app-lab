@@ -1,62 +1,71 @@
-require("dotenv").config();
+const express = require('express');
+const mongoose = require('mongoose');
 
+const dotenv = require('dotenv');
+const Car = require('./models/car.js');
 
-const express = require("express");
+dotenv.config();
 const app = express();
-const mongoose = require("mongoose");
-app.use(express.urlencoded({ extended: true }));
-//const router = express.Router();
-mongoose.connect(process.env.MONGODB_URI)
-app.get("/", (req,res) => {
-    res.send("Cars app Home Page");
-})
-app.post("/cars", async (req,res) => {
-    const newCar = new Car (req.body);
-    await newCar.save();
-    res.redirect('/cars');
-});
-const car = await Car.creat(req.body)
-res.json(Car);
-// server.js the connection
-mongoose.connection.on("connected", () => {
-    console.log(`Connected to MongoDB ${mongoose.connection.name}.`);
-});
-mongoose.connection.on("error",(err) => {
-    console.log(`failed to connect${err}.`);
+const PORT = process.env.PORT || 3000;
 
+app.set('view engine', 'ejs');
+
+app.use(express.urlencoded({ extended: true }));
+
+
+mongoose.connect(process.env.MONGODB_URI, )
+    .then(() => console.log("MongoDB connected"))
+    .catch(err => console.log(err));
+
+
+app.get('/test', (req, res) => {
+    res.send("Server is running!");
 });
+
+
 app.get('/cars', async (req, res) => {
-    const cars = await Car.find();
+    const cars = await Car.find({});
     res.render('index', { cars });
 });
-//const Car = require("./models/car.js");
-const carRoutes = require("./routes/cars");
-app.use("/cars", carRoutes);
+
 
 app.get('/cars/new', (req, res) => {
     res.render('new');
 });
-app.post('/cars', async (req, res) => {
-    const newCar = new Car(req.body);
-    await newCar.save();
-    res.redirect('/cars')
-});
 
-//GET and route
-const Car = require("./models/car.js");
-app.get("/", (req, res) => {
-    res.send("Cars app Home page")
+
+app.post('/cars', async (req, res) => {
+    try {
+        const newCar = await Car.create(req.body);
+        
+        res.redirect('/cars');
+    } catch (err) {
+        res.render('new', { error: err.message }); // Pass error to the new.ejs view
+    }
 });
+// edit 
 app.get('/cars/edit/:id', async (req, res) => {
     const car = await Car.findById(req.params.id);
     res.render('edit', { car });
 });
+
+app.post('/cars/edit/:id', async (req, res) => {
+    try {
+        await Car.findByIdAndUpdate(req.params.id, req.body);
+        res.redirect('/cars');
+    } catch (err) {
+        const car = await Car.findById(req.params.id);
+        res.render('edit', { car, error: err.message }); // Pass error to the edit.ejs view
+    }
+});
+
 
 app.post('/cars/delete/:id', async (req, res) => {
     await Car.findByIdAndDelete(req.params.id);
     res.redirect('/cars');
 });
 
-app.listen(3000, () => {
-    console.log("building a CRUD cars app using port 3000");
+
+app.listen(PORT, () => {
+    console.log(`Server is running on http://localhost:${PORT}`);
 });
